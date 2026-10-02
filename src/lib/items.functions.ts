@@ -17,7 +17,17 @@ const ItemInput = z.object({
   image_url: z.string().max(2048).optional().nullable(),
   notes: z.string().max(500).optional().nullable(),
   price: z.number().min(0).max(100000).optional().nullable(),
+  assign: z.enum(["personal", "family"]).optional(),
 });
+
+async function resolveHousehold(supabase: any, assign?: "personal" | "family") {
+  if (assign === undefined) return undefined;
+  if (assign === "personal") return null;
+  const { data, error } = await supabase.rpc("my_household_id");
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Join or create a family first");
+  return data as string;
+}
 
 export const listFoodItems = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -27,16 +37,18 @@ export const listFoodItems = createServerFn({ method: "POST" })
       .select("*")
       .order("expiry_date", { ascending: true });
     if (error) throw new Error(error.message);
-    return { items: data ?? [] };
+    return { items: data ?? [], userId: context.userId };
   });
 
 export const createFoodItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ItemInput.parse(d))
   .handler(async ({ data, context }) => {
+    const { assign, ...rest } = data;
+    const household_id = (await resolveHousehold(context.supabase, assign)) ?? null;
     const { data: row, error } = await context.supabase
       .from("food_items")
-      .insert({ ...data, user_id: context.userId })
+      .insert({ ...rest, household_id, user_id: context.userId, updated_by: context.userId })
       .select()
       .single();
     if (error) throw new Error(error.message);
@@ -49,7 +61,9 @@ export const updateFoodItem = createServerFn({ method: "POST" })
     ItemInput.partial().extend({ id: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { id, ...patch } = data;
+    const { id, assign, ...rest } = data;
+    const hh = await resolveHousehold(context.supabase, assign);
+    const patch = { ...rest, updated_by: context.userId, ...(hh !== undefined ? { household_id: hh } : {}) };
     const { data: row, error } = await context.supabase
       .from("food_items")
       .update(patch)
@@ -78,7 +92,7 @@ export const markConsumed = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("food_items")
-      .update({ status: "consumed", consumed_at: new Date().toISOString() })
+      .update({ status: "consumed", consumed_at: new Date().toISOString(), updated_by: context.userId })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

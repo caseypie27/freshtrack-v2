@@ -20,6 +20,7 @@ export type Database = {
           consumed_at: string | null
           created_at: string
           expiry_date: string
+          household_id: string | null
           id: string
           image_url: string | null
           location: string | null
@@ -31,6 +32,7 @@ export type Database = {
           status: Database["public"]["Enums"]["food_status"]
           unit: string | null
           updated_at: string
+          updated_by: string | null
           user_id: string
         }
         Insert: {
@@ -38,6 +40,7 @@ export type Database = {
           consumed_at?: string | null
           created_at?: string
           expiry_date: string
+          household_id?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
@@ -49,6 +52,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["food_status"]
           unit?: string | null
           updated_at?: string
+          updated_by?: string | null
           user_id: string
         }
         Update: {
@@ -56,6 +60,7 @@ export type Database = {
           consumed_at?: string | null
           created_at?: string
           expiry_date?: string
+          household_id?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
@@ -67,7 +72,69 @@ export type Database = {
           status?: Database["public"]["Enums"]["food_status"]
           unit?: string | null
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_members: {
+        Row: {
+          household_id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          household_id: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          household_id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string
+          id: string
+          invite_code: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invite_code: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invite_code?: string
+          name?: string
+          owner_id?: string
         }
         Relationships: []
       }
@@ -196,7 +263,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_household: { Args: { _name: string }; Returns: string }
+      gen_invite_code: { Args: never; Returns: string }
+      join_household: { Args: { _code: string }; Returns: string }
+      leave_household: { Args: never; Returns: undefined }
+      my_household_id: { Args: never; Returns: string }
+      regenerate_invite_code: { Args: never; Returns: string }
+      remove_household_member: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
+      rename_household: { Args: { _name: string }; Returns: undefined }
+      transfer_household_ownership: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       food_status: "fresh" | "expiring_soon" | "expired" | "consumed"

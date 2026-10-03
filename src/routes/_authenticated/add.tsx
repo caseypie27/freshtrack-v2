@@ -9,6 +9,7 @@ import { scanFoodImage } from "@/lib/ai.functions";
 import { scanWithRoboflow } from "@/lib/roboflow.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useHousehold } from "@/lib/household";
 import { format, addDays } from "date-fns";
 
 const search = z.object({ mode: z.enum(["scan", "manual"]).optional() });
@@ -39,6 +40,8 @@ function AddItem() {
     notes: "",
     price: "",
   });
+  const household = useHousehold().data;
+  const [assign, setAssign] = useState<"personal" | "family">("personal");
 
   const scanFn = useServerFn(scanFoodImage);
   const roboflowFn = useServerFn(scanWithRoboflow);
@@ -110,6 +113,7 @@ function AddItem() {
           notes: form.notes || null,
           price: form.price ? Number(form.price) : null,
           image_url,
+          assign: household ? assign : "personal",
         },
       });
     },
@@ -282,6 +286,18 @@ function AddItem() {
                 className="input"
                 placeholder="Dairy"
               />
+            </Field>
+            <Field label="Assign to">
+              <select
+                value={household ? assign : "personal"}
+                onChange={(e) => setAssign(e.target.value as "personal" | "family")}
+                className="input"
+              >
+                <option value="personal">Personal</option>
+                <option value="family" disabled={!household}>
+                  {household ? `Family (${household.name})` : "Family (join one first)"}
+                </option>
+              </select>
             </Field>
             <Field label="Location">
               <select

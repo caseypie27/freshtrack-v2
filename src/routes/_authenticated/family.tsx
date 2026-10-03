@@ -8,7 +8,7 @@ import { useHousehold, rpc, memberName } from "@/lib/household";
 import { MemberAvatar } from "@/components/member-avatar";
 
 export const Route = createFileRoute("/_authenticated/family")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { code?: string } => ({
     code: typeof s.code === "string" ? s.code : undefined,
   }),
   head: () => ({
@@ -162,10 +162,8 @@ function Dashboard({ me }: { me: string | null }) {
   const regen = useAction(() => rpc("regenerate_invite_code"), "New invite code generated");
   const leave = useAction(() => rpc("leave_household"), "You left the family");
   const save = useAction(() => rpc("rename_household", { _name: rename }), "Family name updated");
-  const remove = useAction(async () => {}, "");
   const removeM = useMutationFor("remove_household_member", "Member removed");
   const transferM = useMutationFor("transfer_household_ownership", "Ownership transferred");
-  void remove;
 
   const copy = async (text: string, msg: string) => {
     try {

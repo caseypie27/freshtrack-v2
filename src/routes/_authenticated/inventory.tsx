@@ -5,7 +5,9 @@ import { listFoodItems } from "@/lib/items.functions";
 import { FoodCard } from "@/components/food-card";
 import { computeStatus, itemValue, formatRM, type FoodStatus } from "@/lib/food-utils";
 import { useState, useMemo } from "react";
-import { Search, Wallet } from "lucide-react";
+import { Search, Wallet, User, Users } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { useHousehold, memberName } from "@/lib/household";
 
 export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({ meta: [{ title: "Inventory — FreshTrack" }] }),
@@ -28,6 +30,15 @@ function Inventory() {
   });
   const [filter, setFilter] = useState<"all" | FoodStatus>("all");
   const [search, setSearch] = useState("");
+  const [scope, setScope] = useState<"personal" | "family">("personal");
+  const hh = useHousehold().data;
+  const me = itemsQ.data.userId;
+  const byId = new Map((hh?.members ?? []).map((m) => [m.user_id, m]));
+  const who = (uid?: string | null) => {
+    if (!uid) return undefined;
+    const m = byId.get(uid);
+    return { name: uid === me ? "You" : memberName(m), url: m?.avatar_url };
+  };
 
   const items = useMemo(
     () =>
@@ -39,6 +50,7 @@ function Inventory() {
   );
 
   const filtered = items.filter((i) => {
+    if (scope === "personal" ? i.household_id || i.user_id !== me : !i.household_id) return false;
     if (filter !== "all" && i.status !== filter) return false;
     if (search && !i.name.toLowerCase().includes(search.toLowerCase()))
       return false;
@@ -66,7 +78,24 @@ function Inventory() {
         </div>
       </header>
 
-      <div className="mt-5 relative">
+      <div className="mt-5 grid grid-cols-2 p-1 rounded-2xl bg-muted">
+        {([["personal", "My Personal Items", User], ["family", "Family Inventory", Users]] as const).map(([v, l, Ic]) => (
+          <button
+            key={v}
+            onClick={() => setScope(v)}
+            className={`h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${scope === v ? "bg-surface shadow-sm text-foreground" : "text-muted-foreground"}`}
+          >
+            <Ic className="size-3.5" /> {l}
+          </button>
+        ))}
+      </div>
+      {scope === "family" && !hh && (
+        <Link to="/family" className="mt-3 block text-center text-sm bg-primary-soft text-primary rounded-2xl p-3 font-medium">
+          You're not in a family yet — create or join one →
+        </Link>
+      )}
+
+      <div className="mt-4 relative">
         <Search className="size-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
           value={search}
@@ -98,7 +127,9 @@ function Inventory() {
             No items match.
           </p>
         ) : (
-          filtered.map((i) => <FoodCard key={i.id} item={i} />)
+          filtered.map((i) => (
+            <FoodCard key={i.id} item={i} addedBy={scope === "family" ? who(i.updated_by ?? i.user_id) : undefined} />
+          ))
         )}
       </div>
     </div>

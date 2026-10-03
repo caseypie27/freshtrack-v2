@@ -8,7 +8,7 @@ import { useHousehold, rpc, memberName } from "@/lib/household";
 import { MemberAvatar } from "@/components/member-avatar";
 
 export const Route = createFileRoute("/_authenticated/family")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { code?: string } => ({
     code: typeof s.code === "string" ? s.code : undefined,
   }),
   head: () => ({

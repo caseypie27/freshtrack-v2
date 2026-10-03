@@ -26,7 +26,7 @@ import {
   saveMyLocation,
   setLocationRemindersPref,
 } from "@/lib/geo.functions";
-import { Bell, BellRing, Moon, LogOut, ShieldCheck, MapPin } from "lucide-react";
+import { Bell, BellRing, Moon, LogOut, ShieldCheck, MapPin, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 

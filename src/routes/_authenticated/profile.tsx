@@ -238,6 +238,19 @@ function Profile() {
         </div>
       </section>
 
+      <Link
+        to="/family"
+        className="mt-4 flex items-center justify-between bg-surface rounded-2xl p-4 ring-1 ring-black/5"
+      >
+        <span className="flex items-center gap-3 text-sm font-semibold">
+          <span className="size-9 rounded-xl bg-primary-soft text-primary grid place-items-center">
+            <Users className="size-4" />
+          </span>
+          Family / Household
+        </span>
+        <span className="text-muted-foreground">›</span>
+      </Link>
+
       <section className="mt-6">
         <SectionTitle icon={Bell}>Notifications</SectionTitle>
         <div className="mt-3 bg-surface rounded-2xl ring-1 ring-black/5 overflow-hidden">

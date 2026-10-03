@@ -5,6 +5,8 @@ import { listFoodItems, deleteFoodItem, markConsumed, updateFoodItem } from "@/l
 import { computeStatus, statusColor, formatDaysLeft } from "@/lib/food-utils";
 import { ArrowLeft, Check, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useHousehold, memberName } from "@/lib/household";
+import { MemberAvatar } from "@/components/member-avatar";
 import { useState, useMemo } from "react";
 import { format, parseISO } from "date-fns";
 
@@ -27,6 +29,10 @@ function ItemDetail() {
     queryFn: () => fetchItems(),
   });
   const item = q.data.items.find((i) => i.id === id);
+  const hh = useHousehold().data;
+  const editorId = item?.updated_by ?? item?.user_id;
+  const editor = hh?.members.find((m) => m.user_id === editorId);
+  const editorName = editorId === q.data.userId ? "You" : memberName(editor);
   const [form, setForm] = useState(() => ({
     name: item?.name ?? "",
     expiry_date: item?.expiry_date ?? "",
@@ -119,6 +125,12 @@ function ItemDetail() {
           <p className="text-xs text-muted-foreground mt-0.5">
             Expires {format(parseISO(item.expiry_date), "MMM d, yyyy")}
           </p>
+          {item.household_id && (
+            <span className="mt-2 inline-flex items-center gap-1.5 text-[11px] rounded-full bg-primary-soft text-primary pl-0.5 pr-2 py-0.5 font-medium">
+              <MemberAvatar name={editorName} url={editor?.avatar_url} size="xs" />
+              {item.updated_by && item.updated_by !== item.user_id ? "Updated by" : "Added by"} {editorName}
+            </span>
+          )}
         </div>
       </div>
 

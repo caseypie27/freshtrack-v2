@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   ssr: false,
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (data.user) throw redirect({ to: "/home" });
-  },
+ beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      throw redirect({ to: "/home" });
+    }
   head: () => ({
     meta: [
       { title: "FreshTrack — Stay Fresh. Waste Less. Save More." },

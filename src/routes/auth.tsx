@@ -51,19 +51,13 @@ function AuthPage() {
         }
         navigate({ to: "/home" });
 
-    }} else if (mode === "signin") {
+      } else if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
         navigate({ to: "/home" });
-      } else {
-
-        // Force browser redirect so session state updates reliably across the app
-        if (data.session) {
-          window.location.href = "/home";
-        }
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,

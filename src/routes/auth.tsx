@@ -11,7 +11,6 @@ import {
   setLocationReminders,
 } from "@/lib/location-client";
 
-
 export const Route = createFileRoute("/auth")({
   ssr: false,
   component: AuthPage,
@@ -52,11 +51,16 @@ function AuthPage() {
         navigate({ to: "/home" });
 
       } else if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
+
+        if (data.session) {
+          await supabase.auth.setSession(data.session);
+        }
+
         navigate({ to: "/home" });
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
